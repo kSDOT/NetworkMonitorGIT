@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Icons/adapter.png</file>
+        <file>Icons/autoScroll.png</file>
+        <file>Icons/ethernet.png</file>
+    </qresource>
+</RCC>
