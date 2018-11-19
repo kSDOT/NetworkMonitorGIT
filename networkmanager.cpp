@@ -2,8 +2,6 @@
 namespace sta{
     NetworkManager::NetworkManager():
 	mCurrentDevice{ nullptr }, mAddressHandle{ nullptr }{
-
-		connect(this, &NetworkManager::futureCancel, [this]() {if (this->futureFunc.isRunning())futureFunc.cancel(); });
 		//aliases for my personal network devices
 		{
 			aliases.insert({ "DESKTOP-S886ALK.home.gateway", "My Desktop" });
@@ -15,17 +13,34 @@ namespace sta{
 		WSAStartup(MAKEWORD(2, 2), &wsaData);
     }
 	NetworkManager::~NetworkManager(){
+		mPacketCapture->mShouldRun = 0;
+		mThread.quit();
+		mThread.wait();
 		if(mAllDevices.size() > 0) 
 			pcap_freealldevs(mAllDevices.front());
 		WSACleanup();
     }
 	void NetworkManager::selectDevice(int index) {
 		//cancel future execution, open adapter sesion and runs a listen on it
-		emit futureCancel();
-		emit newAddapterClearData();
+		
 		mCurrentDevice = getDevices()[index];
 		openAdapter();
-		futureFunc = QtConcurrent::run(this, &NetworkManager::startCapture);
+		auto restOfCode = [this]() {mPacketCapture = new CaptureClass{};
+									mPacketCapture->moveToThread(&mThread);
+									connect(&mThread, &QThread::started, [this]() { mPacketCapture->startCapture(this); });
+									connect(&mThread, &QThread::started, [this]() {emit newAdapterClearData(); });
+									connect(&mThread, &QThread::finished, mPacketCapture, &QObject::deleteLater);
+									mThread.start(); 
+									};
+		if (mPacketCapture) {
+			emit toolbarMessage("Changing session");
+			connect(&mThread, &QThread::finished, this, restOfCode, Qt::QueuedConnection);
+			mPacketCapture->mShouldRun = 0;
+			mThread.quit();
+
+		}
+		else 
+		restOfCode();
 	}
 	void NetworkManager::updateDeviceList(){
 		//clears available device list and updates it
@@ -115,19 +130,18 @@ namespace sta{
 			mAllDevices.clear();
 		}
 	}
-	void NetworkManager::startCapture() {
+	void CaptureClass::startCapture(NetworkManager* data) {
 		//1-Gets packet from current session
 		//2-Formats it appropiatly and sends it out a qstringlist so tableview can map it to a table
 		//3-Sends total size of packets sniffed during the last time interval, together with a timestamp
-
 		pcap_pkthdr* header;
 		const u_char* packetData;
 		int result;
 		time_t local_tv_sec;
 		std::ostringstream ss;
 
-		IPHeader* ipHeader;
-		UDPHeader* udpHeader;
+		NetworkManager::IPHeader* ipHeader;
+		NetworkManager::UDPHeader* udpHeader;
 		u_int ipLen;
 
 		QString sourceIp;
@@ -139,8 +153,11 @@ namespace sta{
 		QTime startTime;
 		startTime.start();
 		
-		while ((result = pcap_next_ex(mAddressHandle, &header, &packetData)) >= 0) {//1-start the capture
-			emit toolbarMessage("Listening to : " + QString(mCurrentDevice->description));
+		QString deviceDescription= data->mCurrentDevice->description;//in case our mCurrentDevice gets deleted, we keep the value
+																//(mCurrentDevice deletion doesnt affect any other part)
+																
+		while (mShouldRun &&  (result = pcap_next_ex(data->mAddressHandle, &header, &packetData)) >= 0) {//1-start the capture
+			emit data->toolbarMessage("Listening to : " + deviceDescription);
 			if (result == 0)//timeout elapsed
 				continue;
 			QList<QString> output;
@@ -153,11 +170,11 @@ namespace sta{
 			ss.str("");
 			
 			//2-[1]get sourceIp and store its dns name
-			ipHeader = reinterpret_cast<IPHeader*>(const_cast<u_char*>(packetData) + 14);//get position of ip header by skipping
+			ipHeader = reinterpret_cast<NetworkManager::IPHeader*>(const_cast<u_char*>(packetData) + 14);//get position of ip header by skipping
 																					  //14->length of internet header(MAC header)
 																					  //$$care when connection is not enthernet	
 			ipLen = (ipHeader->verIHL & 0b00001111u) * 4;//get position of udp header( length is the number of 4byte words)
-			udpHeader = reinterpret_cast<UDPHeader*>(reinterpret_cast<u_char*>(ipHeader) + ipLen);
+			udpHeader = reinterpret_cast<NetworkManager::UDPHeader*>(reinterpret_cast<u_char*>(ipHeader) + ipLen);
 
 			ss << static_cast<int>(ipHeader->sAddr.byte1) << '.'
 				<< static_cast<int>(ipHeader->sAddr.byte2) << '.'
@@ -166,7 +183,7 @@ namespace sta{
 
 			sourceIp = QString::fromStdString(ss.str());
 
-			output << ipToAlias(ipToDNS(sourceIp, udpHeader->sPort, 0)); //[1]sourceIp
+			output << data->ipToAlias(data->ipToDNS(sourceIp, udpHeader->sPort, 0)); //[1]sourceIp
 			ss.str("");
 
 			//2-[2]get destinationIp and store its dns name
@@ -177,10 +194,10 @@ namespace sta{
 
 			destinationIp = QString::fromStdString(ss.str());
 
-			output << ipToAlias(ipToDNS(destinationIp, udpHeader->dPort, 1));//[2]destinationIp
+			output << data->ipToAlias(data->ipToDNS(destinationIp, udpHeader->dPort, 1));//[2]destinationIp
 			ss.str("");
 			//2-[3]type of protocol
-			output << getProtocol(ipHeader->proto);//[3]details
+			output << data->getProtocol(ipHeader->proto);//[3]details
 			ss.str("");
 
 			//3- add total length of packets
@@ -189,7 +206,7 @@ namespace sta{
 			vec.push_back(output);
 			if ( int elapsedTime = startTime.elapsed(); //send out vec of packets every 500 msec
 				elapsedTime >= 500) {
-				emit dataRead(vec, totalLength, QTime::currentTime());
+				emit data->dataRead(vec, totalLength, QTime::currentTime());
 				startTime.restart();
 				vec.clear();
 				totalLength = 0;

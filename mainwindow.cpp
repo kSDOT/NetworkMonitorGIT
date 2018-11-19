@@ -25,8 +25,8 @@ mChart{ new sta::Chart{} } {
 	ui->statsTableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	
 	//clear current data when changing adapter
-	connect(mNetwork, &sta::NetworkManager::newAddapterClearData, mTable, &sta::Table::clearData);
-	connect(mNetwork, &sta::NetworkManager::newAddapterClearData, mChart, &sta::Chart::clearData);
+	connect(mNetwork, &sta::NetworkManager::newAdapterClearData, mTable, &sta::Table::clearData);
+	connect(mNetwork, &sta::NetworkManager::newAdapterClearData, mChart, &sta::Chart::clearData);
 
 	//replace placeholder widget with proper chartview
 	delete (ui->centralWidget->layout()->replaceWidget(ui->statsGraphWidget, &(mChart->chartView())));
@@ -45,17 +45,25 @@ void MainWindow::selectAdapterDialog() {
 	Ui_AdapterDialog dialogUi;
 	dialogUi.setupUi(&selectAdapter);	
 
+	selectAdapter.setWindowIcon(QIcon(":/Icons/adapter.png"));
 	std::vector<pcap_if_t*> devices = mNetwork->getDevices();
-	for (auto device : devices)
+	for (const auto& device : devices)
 		dialogUi.listWidget->addItem(device->description);
+		
 	auto adaptorSelected = [&selectAdapter, &dialogUi](QListWidgetItem* item)
-							{selectAdapter.done(dialogUi.listWidget->row(item)); };
+							{selectAdapter.done(dialogUi.listWidget->row(item) + 2); };
+	//the dialog will return a value of: 0->rejected
+	//								     1->accepted
+	//									 x->the value we put in .done(int)
+	//so to know if it was our value or reject/accept, we make x>=2 by doing x+=2,
+	//test the result and if its our value we map back x-=2
 
 	connect(dialogUi.listWidget, &QListWidget::itemClicked, adaptorSelected);
 	connect(dialogUi.listWidget, &QListWidget::itemEntered, adaptorSelected);
 
 	//callbacks to connect pressing the item with calling the function on mNetwork that selects the device at that index
-	connect(&selectAdapter, &QDialog::finished, mNetwork, &sta::NetworkManager::selectDevice);
+	connect(&selectAdapter, &QDialog::finished, [this](int i) 
+	{if(i >= 2) QMetaObject::invokeMethod(mNetwork, "selectDevice", Q_ARG(int,i - 2)); });
 	selectAdapter.exec();
 }
 void MainWindow::packageArrived(const std::vector<QList<QString>>& aVec, int totalSize, 

@@ -14,7 +14,7 @@ namespace sta {
 		QStandardItemModel* createTableView();
 	public slots:
 		//resets the graph to default view  when adapter is changed
-		inline void clearData() { this->mTableModel->clear(); }
+		inline void clearData() { this->mTableModel->setRowCount(0); }
 		void addRow(const std::vector<QList<QString>>&);//adds vec.size() rows to the table(each string in stringlist
 														// is one field in the row)
 	private:

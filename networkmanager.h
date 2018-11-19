@@ -9,6 +9,7 @@
 #include <QTimer>
 #include <sstream>
 #include <QtConcurrent/QtConcurrent>
+#include <QThread>
 #include <QCoreApplication>
 #include <QProcess>
 #include <map>
@@ -22,13 +23,11 @@ namespace sta {
 		inline std::vector<pcap_if_t*>& getDevices() { return mAllDevices; };
 	 public slots:
 		void selectDevice(int);
-		void startCapture();
 	    void updateDeviceList();
 	 signals:
 		 void dataRead(const std::vector<QList<QString>>&, int, QTime);//emits data read from adapter
-		 void futureCancel();//stop executing of adapter listen loop 
 		 void toolbarMessage(QString, int = 0);
-		 void newAddapterClearData();//when a new adapter is opened clear data in table and chart
+		 void newAdapterClearData();//when a new adapter is opened clear data in table and chart
      private:
 		#pragma region CLASSES
 		 //helper classess
@@ -68,6 +67,7 @@ namespace sta {
 			 u_short crc; // Header Checksum 
 			 u_short urgptr; // Urgent pointer
 		 };
+		 friend class CaptureClass;//qobject doesnt support nested classes...
 #pragma endregion
 		#pragma region FUNCTIONS
 		void openAdapter();
@@ -82,8 +82,18 @@ namespace sta {
 		pcap_t* mAddressHandle;//handle to opened session
 		std::map<QString, QString> aliases;//aliased names for common dns names (such as MyDesktop)
 		std::map<QString, QString> cachedIp;//caches ip to dns mappings to reduce mapping calls
-		QFuture<void> futureFunc;//future we executre  listen loop on
+		CaptureClass* mPacketCapture = nullptr;
+		QThread mThread;
 		#pragma endregion
     };
+
+	class CaptureClass : public QObject {
+		Q_OBJECT
+	public slots:
+		void startCapture(NetworkManager*);	
+	private:
+		friend class NetworkManager;
+		bool mShouldRun = 1;
+	};
 
 }
