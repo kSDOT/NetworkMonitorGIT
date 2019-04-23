@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title>3PCAP man page</title>
+<meta name="generator" content="roffit">
+<STYLE type="text/css">
+pre {
+  overflow: auto;
+  margin: 0;
+}
+
+P.level0, pre.level0 {
+ padding-left: 2em;
+}
+
+P.level1, pre.level1 {
+ padding-left: 4em;
+}
+
+P.level2, pre.level2 {
+ padding-left: 6em;
+}
+
+span.emphasis {
+ font-style: italic;
+}
+
+span.bold {
+ font-weight: bold;
+}
+
+span.manpage {
+ font-weight: bold;
+}
+
+h2.nroffsh {
+ background-color: #e0e0e0;
+}
+
+span.nroffip {
+ font-weight: bold;
+ font-size: 120%;
+ font-family: monospace;
+}
+
+p.roffit {
+ text-align: center;
+ font-size: 80%;
+}
+</STYLE>
+</head><body>
+
+<p class="level0"><a name="NAME"></a><h2 class="nroffsh">NAME</h2>
+<p class="level0">pcap_get_selectable_fd - get a file descriptor on which a select() can be done for a live capture <a name="SYNOPSIS"></a><h2 class="nroffsh">SYNOPSIS</h2>
+<p class="level0"><pre class="level0">
+&#35;include &lt;pcap/pcap.h&gt;
+int pcap_get_selectable_fd(pcap_t *p);
+</pre>
+
+<p class="level0"><a name="DESCRIPTION"></a><h2 class="nroffsh">DESCRIPTION</h2>
+<p class="level0"><span Class="bold">pcap_get_selectable_fd()</span> returns, on UNIX, a file descriptor number for a file descriptor on which one can do a <span Class="bold">select()</span>, <span Class="bold">poll()</span>, or other such call to wait for it to be possible to read packets without blocking, if such a descriptor exists, or -1, if no such descriptor exists.  Some network devices opened with <span Class="bold">pcap_create()</span> and <span Class="bold">pcap_activate()</span>, or with <span Class="bold">pcap_open_live()</span>, do not support <span Class="bold">select()</span> or <span Class="bold">poll()</span> (for example, regular network devices on FreeBSD 4.3 and 4.4, and Endace DAG devices), so -1 is returned for those devices. 
+<p class="level0">Note that a descriptor on which a read can be done without blocking may, on some platforms, not have any packets to read if the read timeout has expired.  A call to <span Class="bold">pcap_dispatch()</span> will return 0 in this case, but will not block. 
+<p class="level0">Note that in: 
+<p class="level0"><a name=""></a><span class="nroffip"></span> 
+<p class="level1">FreeBSD prior to FreeBSD 4.6; 
+<p class="level0"><a name=""></a><span class="nroffip"></span> 
+<p class="level1">NetBSD prior to NetBSD 3.0; 
+<p class="level0"><a name=""></a><span class="nroffip"></span> 
+<p class="level1">OpenBSD prior to OpenBSD 2.4; 
+<p class="level0"><a name=""></a><span class="nroffip"></span> 
+<p class="level1">Mac OS X prior to Mac OS X 10.7; 
+<p class="level1"><span Class="bold">select()</span> and <span Class="bold">poll()</span> do not work correctly on BPF devices; <span Class="bold">pcap_get_selectable_fd()</span> will return a file descriptor on most of those versions (the exceptions being FreeBSD 4.3 and 4.4), but a simple <span Class="bold">select()</span> or <span Class="bold">poll()</span> will not indicate that the descriptor is readable until a full buffer&#39;s worth of packets is received, even if the read timeout expires before then.  To work around this, an application that uses <span Class="bold">select()</span> or <span Class="bold">poll()</span> to wait for packets to arrive must put the <span Class="bold">pcap_t</span> in non-blocking mode, and must arrange that the <span Class="bold">select()</span> or <span Class="bold">poll()</span> have a timeout less than or equal to the read timeout, and must try to read packets after that timeout expires, regardless of whether <span Class="bold">select()</span> or <span Class="bold">poll()</span> indicated that the file descriptor for the <span Class="bold">pcap_t</span> is ready to be read or not.  (That workaround will not work in FreeBSD 4.3 and later; however, in FreeBSD 4.6 and later, <span Class="bold">select()</span> and <span Class="bold">poll()</span> work correctly on BPF devices, so the workaround isn&#39;t necessary, although it does no harm.) 
+<p class="level1">Note also that <span Class="bold">poll()</span> doesn&#39;t work on character special files, including BPF devices, in Mac OS X 10.4 and 10.5, so, while <span Class="bold">select()</span> can be used on the descriptor returned by <span Class="bold">pcap_get_selectable_fd()</span>, <span Class="bold">poll()</span> cannot be used on it those versions of Mac OS X.  Kqueues also don&#39;t work on that descriptor. <span Class="bold">poll()</span>, but not kqueues, work on that descriptor in Mac OS X releases prior to 10.4; <span Class="bold">poll()</span> and kqueues work on that descriptor in Mac OS X 10.6 and later. 
+<p class="level1"><span Class="bold">pcap_get_selectable_fd()</span> is not available on Windows. <a name="RETURN"></a><h2 class="nroffsh">RETURN VALUE</h2>
+<p class="level0">A selectable file descriptor is returned if one exists; otherwise, -1 is returned. <a name="SEE"></a><h2 class="nroffsh">SEE ALSO</h2>
+<p class="level0"><a Class="bold" href="./pcap.html">pcap</a>(3PCAP), <span Class="bold">select</span>(2), <span Class="bold">poll</span>(2) <p class="roffit">
+ This HTML page was made with <a href="http://daniel.haxx.se/projects/roffit/">roffit</a>.
+</body></html>

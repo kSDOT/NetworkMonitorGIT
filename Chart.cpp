@@ -1,57 +1,86 @@
 #include "chart.h"
+#include "QTime"
 namespace sta {
-	Chart::Chart(QWidget* parent) : QWidget{ parent }, mMinXVal{ 0 }, mMaxXVal{ 60 }, mMinYVal{ 0 }, mMaxYVal{100},
-	lastTime{ QTime::currentTime() }, lastLength{ 0 } {
+	Chart::Chart(QWidget* parent) : QWidget{ parent }, mMinXVal{ 0 }, mMaxXVal{ 10 }, mMinYVal{ 0 }, mMaxYVal{10},
+	mLastTime{ QTime::currentTime() }{
 		mChartView = new QtCharts::QChartView(createLineChart());//create chartview, antialiased and with horizontal zoom enabled
 		mChartView->setRenderHint(QPainter::Antialiasing, true);
-		mChartView->setRubberBand(QtCharts::QChartView::HorizontalRubberBand);
+		mChartView->setRubberBand(QtCharts::QChartView::NoRubberBand);
+		mChart->setAnimationEasingCurve(QEasingCurve::InOutQuad);
 }												   
 	Chart::~Chart(){
 		delete mChartView;
 		//mseries and mchart are set to have  mchartview  as parent
 	}
-	void Chart::addPoint(int length, QTime& time) {
-		qreal timeSecMSec = time.second() + time.msec() / 1000;//get time  inf format sec.msec
+	void Chart::addPoint(int lengthBytes, QTime& time) {
+		qreal timeSecMSec = time.second() + time.msec() / 1000.0;//get time in format sec.msec
+		qreal length = lengthBytes * 8.0 / 1024 / 1024;//display in MBit/s
+		mLastValue = length;
+		mTimeValuePairs.push_back({ time.second(), length });//keep the max value of last 6 sec
+		mTimeValuePairs.remove_if([time](std::pair<int, qreal> pair) {return std::abs(pair.first - time.second()) > 6 && 
+																														!(pair.first >= 50 && pair.second  >= 50); });
 
-		if ( time.minute() > lastTime.minute()) {//if the new point is in a new minute we reset the series
-			mSeries->clear();
-			mSeries->append(QPointF{ 0, static_cast<qreal>(lastLength)});
-			mMaxYVal = lastLength;
-			mChart->axisY()->setRange(mMinYVal, mMaxYVal);
-		}
+		mNewMaxY = 0; 
+		std::for_each(mTimeValuePairs.begin(), mTimeValuePairs.end(), 
+			[this](std::pair<int, qreal> pair) {if (this->mNewMaxY < pair.second) this->mNewMaxY = pair.second ; });
 
-		lastTime = time;
-		lastLength = length;
-		mSeries->append(QPointF{ timeSecMSec, static_cast<qreal>(length) });
+			if (mNewMaxY != mMaxYVal) {//resizes the y axis according to max Y value in axis
+				mMaxYVal = mNewMaxY;
+				mChart->axisY()->setRange(mMinYVal, mMaxYVal);
+		    }
 
-		if (qreal difference = length - mMaxYVal; difference > 0) {//resizes the y axis according to max Y value in axis
-			mMaxYVal = length;
-			mChart->axisY()->setRange(mMinYVal, mMaxYVal);
-		}
-
+			if (timeSecMSec - 6 < 0)
+				mChart->axisX()->setRange(0, 10);
+			else if (timeSecMSec + 4 > 60)
+				mChart->axisX()->setRange(50, 60);
+			else
+				mChart->axisX()->setRange(timeSecMSec - 6, timeSecMSec + 4);
+			
+			if(timeSecMSec < mLastTime.second() + mLastTime.msec() / 1000) {//if we go into a new minute
+				mUpperSeries->clear();
+				mLowerSeries->clear();
+				mUpperSeries->append(0, mLastValue);
+				mLowerSeries->append(0, 0);
+			}
+			mUpperSeries->append(QPointF{ timeSecMSec, std::max(0.05, length) });
+			mLowerSeries->append(QPointF{ timeSecMSec, 0});
+			
+			mLastTime = time;
 	}
-	QtCharts::QChart* Chart::createLineChart() {
+	QtCharts::QChartView& Chart::chartView() const{
+		return *mChartView; 
+	}
+	void  Chart::clearData() {
+		mUpperSeries->clear();
+		mMaxYVal = 100; 
+	}
+	QtCharts::QChart* Chart::createLineChart(){
 		mChart = new QtCharts::QChart();//create and configure a new chart 
 		mChart->setTitle("Data usage");
 		mChart->setTitleFont(QFont{"Arial", 10});
 		mChart->setTitleBrush(QBrush(Qt::black));
 		mChart->legend()->hide();
 
-		mSeries = new QtCharts::QLineSeries(mChart);//create a new series and add to chart
+		
+		mLowerSeries = new QtCharts::QLineSeries(mChart);
+		mUpperSeries = new QtCharts::QLineSeries(mChart);
+		mSeries = new QtCharts::QAreaSeries(mUpperSeries, mLowerSeries);//create a new series and add to chart
 		mChart->addSeries(mSeries);
 
 		mChart->createDefaultAxes();//configure axes
-		reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisX())->setTickCount(16);
-		reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisY())->setTickCount(5);
+		QtCharts::QValueAxis* xAxis = reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisX());
+		QtCharts::QValueAxis* yAxis = reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisY());
 		
-		mChart->axisX()->setRange(mMinXVal, mMaxXVal);
-		mChart->axisY()->setRange(mMinYVal, mMaxYVal);
-
-		reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisX())->setLabelFormat("%d");
-		reinterpret_cast<QtCharts::QValueAxis*>(mChart->axisY())->setLabelFormat("%d");
-
-		mChart->axisX()->setGridLineVisible(false);
-
+		xAxis->setTickCount(11);
+		xAxis->setRange(mMinXVal, mMaxXVal);
+		xAxis->setLabelFormat("%.1f");
+		xAxis->setGridLineVisible(false);
+		
+		yAxis->setTickCount(5);
+		yAxis->setRange(mMinYVal, mMaxYVal);
+		yAxis->setLabelFormat("%.4f");
+		yAxis->setTitleText("Mb");
+		
 		return mChart;
 	}
 }

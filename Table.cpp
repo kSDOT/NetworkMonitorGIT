@@ -13,13 +13,29 @@ namespace sta {
 		mTableModel->setHorizontalHeaderItem(3, new QStandardItem(QString("Protocol")));
 		return mTableModel;
 	}
-	void Table::addRow(const std::vector<QList<QString>>& aVec) {
-		QList<QStandardItem*> rowData{};//transform stringlist to standarditemlist
+	void Table::clearData() { 
+		mTableModel->setRowCount(0); 
+	}
+	void Table::addRows(const std::vector<QList<QString>>& aVec) {
+		QList<QStandardItem*> rowData;//transform stringlist to standarditemlist
 		for (auto& list : aVec) {
 			for (auto& string : list)
 				rowData << new QStandardItem{ string };
 			mTableModel->appendRow(rowData);//append each row and reset the list
 			rowData.clear();
 		}
+		if (int rowCount = mTableModel->rowCount(); 
+			rowCount > mMaxNumberOfRows)
+			mTableModel->removeRows(0,  rowCount - mMaxNumberOfRows );
+		
+	}
+	void Table::setNumberOfRows(int newNumber) {
+		if (mMaxNumberOfRows != newNumber) {
+			mMaxNumberOfRows = newNumber;
+			emit numberOfRowsChanged(mMaxNumberOfRows);
+		}
+	}
+	int Table::getNumberOfRows() const { 
+		return mMaxNumberOfRows; 
 	}
 }

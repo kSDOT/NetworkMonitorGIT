@@ -7,19 +7,22 @@
 #undef max
 #endif
 #pragma endregion
-#pragma region MAIN
-int main(int argc,  char** argv)	
-try{
-		QApplication app{argc, argv};
-		MainWindow window{};
-		window.show();
-		return app.exec();
-	}
-	catch (std::exception& e) {
-		std::cerr << "In MAIN(), exception handled in catch(std::exception& e)"<<std::endl
-				  << "Error msg: " << e.what() << std::endl;
-	}
-	catch (...) {
-		std::cerr << "Unhandled exception!  Unkown type " << std::endl;
-	}
-#pragma endregion
+
+int main(int argc, char** argv)
+try {
+	QApplication app{ argc, argv };
+	MainWindow window{};
+	window.show();
+	return app.exec();
+}
+catch (std::exception& e) {
+	std::cerr << "In MAIN(), exception handled in catch(std::exception& e)" << std::endl
+		<< "Error msg: " << e.what() << std::endl;
+}
+catch (...) {
+	std::cerr << "Unhandled exception!  Unkown type " << std::endl;
+}
+
+
+//PROBLEMs:
+//json file doesnt save if program gets force shut

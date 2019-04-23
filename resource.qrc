@@ -1,7 +1,11 @@
 <RCC>
-    <qresource prefix="/">
-        <file>Icons/adapter.png</file>
-        <file>Icons/autoScroll.png</file>
-        <file>Icons/ethernet.png</file>
-    </qresource>
+  <qresource prefix="/">
+    <file>Icons/menu.png</file>
+    <file>Icons/adapter.png</file>
+    <file>Icons/autoScroll.png</file>
+    <file>Icons/ethernet.png</file>
+    <file>Icons/translate.png</file>
+    <file>Icons/save.png</file>
+    <file>persistent.json</file>
+  </qresource>
 </RCC>

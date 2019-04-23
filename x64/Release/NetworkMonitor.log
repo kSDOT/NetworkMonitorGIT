@@ -1,9 +1,2 @@
-﻿  Generate moc_predefs.h
-  Moc'ing mainwindow.h...
-  Moc'ing networkmanager.h...
-  main.cpp
-  mainwindow.cpp
-  networkmanager.cpp
-  moc_mainwindow.cpp
-  moc_networkmanager.cpp
-  NetworkMonitor.vcxproj -> C:\Users\Klejdi\repos\NetworkMonitor\NetworkMonitor\release\NetworkMonitor.exe
+﻿  main.cpp
+  NetworkMonitor.vcxproj -> D:\repos\NetworkMonitorGIT\release\NetworkMonitor.exe

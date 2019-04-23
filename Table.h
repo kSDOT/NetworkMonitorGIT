@@ -1,23 +1,27 @@
 #pragma once
-#pragma region INCLUDES
 #include <QWidget>
 #include <QTableView>
 #include <QStandardItemModel>
-#pragma endregion
 namespace sta {
 	class Table : public QWidget {
 		Q_OBJECT
 	public:
-		
+		Q_PROPERTY(int maxNumberOfRows READ getNumberOfRows WRITE setNumberOfRows  NOTIFY numberOfRowsChanged)
+	
 		Table(QTableView*);
 		~Table();
 		QStandardItemModel* createTableView();
+	signals:
+		void numberOfRowsChanged(int);
 	public slots:
 		//resets the graph to default view  when adapter is changed
-		inline void clearData() { this->mTableModel->setRowCount(0); }
-		void addRow(const std::vector<QList<QString>>&);//adds vec.size() rows to the table(each string in stringlist
-														// is one field in the row)
+		 void clearData();
+		void addRows(const std::vector<QList<QString>>&);//adds vec.size() rows to the table(each string in stringlist
+																									// is one field in the row)	
+		void setNumberOfRows(int);
+		int getNumberOfRows() const;
 	private:
 		QStandardItemModel* mTableModel;
+		int mMaxNumberOfRows;
 	};
 }

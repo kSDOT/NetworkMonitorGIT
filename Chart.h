@@ -1,11 +1,13 @@
 #pragma once
 #pragma region INCLUDES
-#include <QtCharts/QSplineSeries>
+#include <QtCharts/QLineSeries>
 #include <QtCharts/QValueAxis>
 #include <QtCharts/QChart>
 #include <QtCharts/QChartView>
 #include <QTime>
 #include <QtCharts/QValueAxis>
+#include <QEasingCurve>
+#include <QtCharts/QAreaSeries>
 #pragma endregion
 namespace sta {
 	class Chart : public QWidget{
@@ -14,31 +16,32 @@ namespace sta {
 	public:
 		Chart(QWidget* = nullptr);
 		~Chart();
-		
-		void addPoint(int, QTime&);//adds new point to series
-		QtCharts::QChartView& chartView() { return *mChartView; }
 
-	public slots:
+	public slots:		
+		void addPoint(int, QTime&);//adds new point to series
+		QtCharts::QChartView& chartView() const;
 		//resets the graph to default view  when adapter is changed
-		inline void clearData() { this->mSeries->clear(); mMaxYVal = 100; }
-	private:
-#pragma region FUNCTIONS
+		void clearData();
+	private://FUNCTIONS
 		QtCharts::QChart* createLineChart();//creates the line chart
-#pragma endregion
-#pragma region DATA MEMBERS
+	private://DATA MEMBERS
 		QtCharts::QChartView* mChartView;
 		QtCharts::QChart* mChart;
-		QtCharts::QLineSeries* mSeries;
+		QtCharts::QLineSeries* mLowerSeries;
+		QtCharts::QLineSeries* mUpperSeries;
+		QtCharts::QAreaSeries* mSeries;
 
-		int mMinXVal;//range for X axis
-		int mMaxXVal;
+		qreal mMinXVal;//range for X axis
+		qreal mMaxXVal;
 		  
-		int mMinYVal;//range for Y axis
-		int mMaxYVal;
+		qreal mMinYVal;//range for Y axis
+		qreal mMaxYVal;
 
-		QTime lastTime;//store values of last point added
-		int lastLength;
-#pragma endregion
+		qreal mNewMaxY; 
+
+		QTime mLastTime;//store values of last point added
+		qreal mLastValue;
+		std::list<std::pair<int, qreal>> mTimeValuePairs;
 	};
 }
 

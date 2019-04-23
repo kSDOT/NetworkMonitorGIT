@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'ChooseAdapter.ui'
 **
-** Created by: Qt User Interface Compiler version 5.10.1
+** Created by: Qt User Interface Compiler version 5.12.2
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -10,11 +10,8 @@
 #define UI_CHOOSEADAPTER_H
 
 #include <QtCore/QVariant>
-#include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QButtonGroup>
-#include <QtWidgets/QHeaderView>
-#include <QtWidgets/QLabel>
+#include <QtWidgets/QGroupBox>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QWidget>
 
@@ -23,20 +20,20 @@ QT_BEGIN_NAMESPACE
 class Ui_AdapterDialog
 {
 public:
-    QLabel *label;
+    QGroupBox *groupBox;
     QListWidget *listWidget;
 
     void setupUi(QWidget *AdapterDialog)
     {
         if (AdapterDialog->objectName().isEmpty())
-            AdapterDialog->setObjectName(QStringLiteral("AdapterDialog"));
-        AdapterDialog->resize(702, 211);
-        label = new QLabel(AdapterDialog);
-        label->setObjectName(QStringLiteral("label"));
-        label->setGeometry(QRect(20, 1, 691, 20));
-        listWidget = new QListWidget(AdapterDialog);
-        listWidget->setObjectName(QStringLiteral("listWidget"));
-        listWidget->setGeometry(QRect(1, 21, 701, 189));
+            AdapterDialog->setObjectName(QString::fromUtf8("AdapterDialog"));
+        AdapterDialog->resize(605, 211);
+        groupBox = new QGroupBox(AdapterDialog);
+        groupBox->setObjectName(QString::fromUtf8("groupBox"));
+        groupBox->setGeometry(QRect(10, 10, 591, 196));
+        listWidget = new QListWidget(groupBox);
+        listWidget->setObjectName(QString::fromUtf8("listWidget"));
+        listWidget->setGeometry(QRect(7, 20, 579, 166));
 
         retranslateUi(AdapterDialog);
 
@@ -46,7 +43,7 @@ public:
     void retranslateUi(QWidget *AdapterDialog)
     {
         AdapterDialog->setWindowTitle(QApplication::translate("AdapterDialog", "Choose Adapter", nullptr));
-        label->setText(QApplication::translate("AdapterDialog", "Select adapter to open:", nullptr));
+        groupBox->setTitle(QApplication::translate("AdapterDialog", "Select Adapter to open", nullptr));
     } // retranslateUi
 
 };
