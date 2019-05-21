@@ -1,5 +1,6 @@
 #include "chart.h"
 #include "QTime"
+
 namespace sta {
 	Chart::Chart(QWidget* parent) : QWidget{ parent }, mMinXVal{ 0 }, mMaxXVal{ 10 }, mMinYVal{ 0 }, mMaxYVal{10},
 	mLastTime{ QTime::currentTime() }{
@@ -25,7 +26,7 @@ namespace sta {
 			[this](std::pair<int, qreal> pair) {if (this->mNewMaxY < pair.second) this->mNewMaxY = pair.second ; });
 
 			if (mNewMaxY != mMaxYVal) {//resizes the y axis according to max Y value in axis
-				mMaxYVal = mNewMaxY;
+				mMaxYVal = std::max(1.0, mNewMaxY);//1 is the minimal displayable value
 				mChart->axisY()->setRange(mMinYVal, mMaxYVal);
 		    }
 
@@ -42,7 +43,8 @@ namespace sta {
 				mUpperSeries->append(0, mLastValue);
 				mLowerSeries->append(0, 0);
 			}
-			mUpperSeries->append(QPointF{ timeSecMSec, std::max(0.05, length) });
+
+			mUpperSeries->append(QPointF{ timeSecMSec, std::max(0.025, length)});//make lines visible when height is 0
 			mLowerSeries->append(QPointF{ timeSecMSec, 0});
 			
 			mLastTime = time;
@@ -52,7 +54,7 @@ namespace sta {
 	}
 	void  Chart::clearData() {
 		mUpperSeries->clear();
-		mMaxYVal = 100; 
+		mMaxYVal = 10; 
 	}
 	QtCharts::QChart* Chart::createLineChart(){
 		mChart = new QtCharts::QChart();//create and configure a new chart 

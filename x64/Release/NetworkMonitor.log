@@ -1,2 +1,3 @@
-﻿  main.cpp
+﻿  Rcc'ing resource.qrc...
+  qrc_resource.cpp
   NetworkMonitor.vcxproj -> D:\repos\NetworkMonitorGIT\release\NetworkMonitor.exe

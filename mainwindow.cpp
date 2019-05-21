@@ -108,7 +108,7 @@ void MainWindow::selectAdapterDialog() {
 
 	//callbacks to connect pressing the item with calling the function on mNetwork that selects the device at that index
 	connect(&selectAdapter, &QDialog::finished, [this](int i) 
-	{if(i >= 2) QMetaObject::invokeMethod(mNetwork, "selectDevice", Q_ARG(int,i - 2)); });
+	{if(i >= 2) mNetwork->selectDevice(i - 2); });
 	selectAdapter.exec();
 }
 void MainWindow::selectAliasesDialog(){  

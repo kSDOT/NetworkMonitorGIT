@@ -91,7 +91,7 @@ namespace sta {
 		if (mAddressHandle = pcap_open(mCurrentDevice->name,
 			65536,
 			PCAP_OPENFLAG_PROMISCUOUS,
-			1000,
+			200,
 			nullptr,
 			errbuf.data()
 		); mAddressHandle == nullptr)
@@ -180,17 +180,15 @@ namespace sta {
 		while (!QThread::currentThread()->isInterruptionRequested()
 			&& (result = pcap_next_ex(data->mAddressHandle, &header, &packetData)) >= 0) {//1-start the capture
 			emit data->toolbarMessage("Listening to : " + deviceDescription);
-			
-			if (result == 0) {//timeout elapsed
+			if (result == 0) { //in case there was a timeout event, care packetdata might be null
 				if (int elapsedTime = startTime.elapsed(); //send out vec of packets every x msec
 					elapsedTime >= 200) {
 					emit data->dataRead(vec, totalLength, QTime::currentTime());
 					startTime.restart();
 					vec.clear();
 					totalLength = 0;
-				}
-				else
-					continue;
+				}			
+				continue;
 			}
 			QList<QString> output;
 

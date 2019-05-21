@@ -25,4 +25,5 @@ catch (...) {
 
 
 //PROBLEMs:
-//json file doesnt save if program gets force shut
+//json file doesnt save if program gets force shut because destructor doesnt get called
+//widget insert row in aliases doesnt update properly when viewport is filled
